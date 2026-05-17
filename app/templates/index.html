@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sephora Worth It? — ML Predictor</title>
+  <link href="https://fonts.googleapis.com/css2?family=Micro+5&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: url("{{ url_for('static', filename='sephora_bg.png') }}") left center/cover no-repeat;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 4rem;
+    }
+
+    .wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      position: relative;
+      z-index: 1;
+    }
+
+    .pixel-title {
+      font-family: 'Micro 5', sans-serif;
+      font-size: 7rem;
+      color: #f049ce;
+      text-align: center;
+      width: 100%;
+      margin-bottom: 1.75rem;
+      letter-spacing: 4px;
+    }
+
+    .page {
+      display: flex;
+      align-items: flex-start;
+      gap: 3rem;
+      width: 100%;
+      justify-content: center;
+    }
+
+    .logo-side {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+    }
+
+    .logo-side img {
+      width: 500px;
+      height: auto;
+      display: block;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 2.5rem;
+      max-width: 560px;
+      width: 100%;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, .08)
+    }
+
+    .sub {
+      font-size: .875rem;
+      color: #888;
+      margin-bottom: 2rem
+    }
+
+    .field {
+      margin-bottom: 1.25rem
+    }
+
+    label {
+      display: block;
+      font-size: .8rem;
+      font-weight: 600;
+      color: #444;
+      margin-bottom: .4rem;
+      text-transform: uppercase;
+      letter-spacing: .05em
+    }
+
+    input,
+    select {
+      width: 100%;
+      padding: .65rem .9rem;
+      border: 1.5px solid #e8e8e8;
+      border-radius: 8px;
+      font-size: .95rem;
+      color: #1a1a1a;
+      background: #fafafa;
+      transition: border-color .2s
+    }
+
+    input:focus,
+    select:focus {
+      outline: none;
+      border-color: #d4a1a1;
+      background: #fff
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: .75rem
+    }
+
+    .check {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      font-size: .875rem;
+      color: #444;
+      cursor: pointer
+    }
+
+    .check input {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      accent-color: #f049ce
+    }
+
+    button {
+      width: 100%;
+      padding: .85rem;
+      background: #f049ce;
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      margin-top: 1rem;
+      transition: background .2s, transform .1s
+    }
+
+    button:hover {
+      background: #b56a6a
+    }
+
+    button:active {
+      transform: scale(.98)
+    }
+
+
+
+    .note {
+      margin-top: 1.25rem;
+      font-size: .78rem;
+      color: #aaa;
+      text-align: center
+    }
+
+    @media (max-width: 768px) {
+      .page {
+        flex-direction: column;
+        align-items: center;
+        gap: 1.5rem;
+      }
+
+      .logo-side img {
+        width: 180px;
+      }
+
+      .pixel-title {
+        font-size: 2.2rem;
+      }
+
+      body {
+        padding: 1.5rem 1rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrapper">
+    <h1 class="pixel-title">Is it actually worth it?</h1>
+    <div class="page">
+      <div class="logo-side">
+        <img src="{{ url_for('static', filename='aasees_logo-removebg-preview.png') }}" alt="Logo" />
+      </div>
+      <div class="card">
+        <p class="sub">ML-powered Sephora predictor · trained on 1M+ reviews</p>
+        <form action="/predict" method="POST">
+          <div class="field">
+            <label>Product Category</label>
+            <select name="category">
+              {% for cat in categories %}<option value="{{ cat }}">{{ cat }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="field">
+            <label>Price (USD)</label>
+            <input type="number" name="price" min="1" max="500" step="0.01" required />
+          </div>
+          <div class="field">
+            <label>Number of Written Reviews</label>
+            <input type="number" name="reviews" min="0" required />
+          </div>
+          <div class="field">
+            <label>Brand Average Rating (1–5)</label>
+            <input type="number" name="brand_avg_rating" min="1" max="5" step="0.01" required />
+          </div>
+          <div class="field">
+            <label>Product flags</label>
+            <div class="grid">
+              <label class="check"><input type="checkbox" name="limited_edition" value="1" />Limited edition</label>
+              <label class="check"><input type="checkbox" name="new" value="1" />New arrival</label>
+              <label class="check"><input type="checkbox" name="online_only" value="1" />Online only</label>
+              <label class="check"><input type="checkbox" name="out_of_stock" value="1" />Out of stock</label>
+              <label class="check"><input type="checkbox" name="sephora_exclusive" value="1" />Sephora exclusive</label>
+            </div>
+          </div>
+          <button type="submit">Predict →</button>
+        </form>
+        <p class="note">Model trained on Sephora dataset via Kaggle · Educational use</p>
+      </div>
+    </div>
+  </div>
+  <canvas id="sparkles"></canvas>
+  <script>
+    const canvas = document.getElementById('sparkles');
+    const ctx = canvas.getContext('2d');
+
+    function resize() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    canvas.style.cssText = `
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 0;
+  `;
+
+    const COLORS = ['#f049ce', '#ff9ee8', '#ffffff', '#ffccf5', '#c724a1'];
+    const COUNT = 60;
+
+    const sparkles = Array.from({ length: COUNT }, () => spawn());
+
+    function spawn() {
+      return {
+        x: Math.random() * window.innerWidth,
+        y: Math.random() * window.innerHeight,
+        size: Math.floor(Math.random() * 3 + 1) * 3,
+        alpha: Math.random(),
+        delta: (Math.random() * 0.02 + 0.005) * (Math.random() < 0.5 ? 1 : -1),
+        color: COLORS[Math.floor(Math.random() * COLORS.length)],
+        life: 0,
+        maxLife: Math.random() * 200 + 80,
+      };
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      sparkles.forEach((s, i) => {
+        s.alpha += s.delta;
+        s.life++;
+
+        if (s.life > s.maxLife || s.alpha <= 0 || s.alpha > 1) {
+          sparkles[i] = spawn();
+          sparkles[i].x = Math.random() * window.innerWidth;
+          sparkles[i].y = Math.random() * window.innerHeight;
+          return;
+        }
+
+        ctx.globalAlpha = Math.max(0, Math.min(1, s.alpha));
+        ctx.fillStyle = s.color;
+        ctx.fillRect(s.x, s.y, s.size, s.size);
+      });
+
+      ctx.globalAlpha = 1;
+      requestAnimationFrame(draw);
+    }
+
+    draw();
+  </script>
+</body>
+
+</html>
